@@ -48,6 +48,24 @@ namespace LivrariaAPI.DAO
                 .ToListAsync();
         }
 
+        public async Task<ICollection<Livro>> FiltroLivro(string autor, string nome)
+        {
+            return await _context.Livro
+                .Where(p => (autor == null || p.Autor == autor)
+                && (nome == null || p.Nome == nome))
+
+                .ToListAsync();
+        }
+
+        //public async Task<ICollection<Livro>> FiltroLivro(int ProfessorTableId, string titulo1, string categoria1, string status1)
+        //{
+        //    return await context.CursosTable.
+        //        Where(p => (p.ProfessorTableId == ProfessorTableId)
+        //        && (titulo1 == null || p.Titulo == titulo1)
+        //        && (categoria1 == null || p.Categoria == categoria1)
+        //        && (status1 == null || p.Status == status1)).ToListAsync();
+        //}
+
         public async Task<Livro> GetByLivroId(int? Id)
         {
             return await _context.Livro

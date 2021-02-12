@@ -9,7 +9,8 @@ using LivrariaAPI.Data;
 using LivrariaAPI.Models;
 using LivrariaAPI.Models.ViewModels;
 using System.Globalization;
-using Microsoft.AspNetCore.Hosting;
+using System.IO;
+using LivrariaAPI.infra;
 
 namespace LivrariaAPI.Controllers
 {
@@ -18,18 +19,13 @@ namespace LivrariaAPI.Controllers
     public class LivroController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
-        private IWebHostEnvironment _webHostEnvironment;
         private readonly ILivroDAO _livroDAO;
 
-        public LivroController(ApplicationDbContext context,
-            IWebHostEnvironment webHostEnvironment,
-            ILivroDAO livroDAO)
+        public LivroController(ApplicationDbContext context, ILivroDAO livroDAO)
         {
             _context = context;
-            _webHostEnvironment = webHostEnvironment;
             _livroDAO = livroDAO;
         }
-
 
         // GET: api/Livro
         [HttpGet]
@@ -38,79 +34,65 @@ namespace LivrariaAPI.Controllers
             try
             {
                 var livroLista = await _livroDAO.Listar();
-               
-                return Ok(livroLista);
+
+                var livrosViewModel = new List<LivroViewModel>();
+
+                foreach (var livro in livroLista)
+                {                    
+                    var data = livro.Data_Publicacao != null ? livro.Data_Publicacao.Value.ToString("dd/MM/yyyy") : null;
+                    var livroViewModel = new LivroViewModel
+                    {
+                        Id = livro.Id,
+                        ISBN = livro.ISBN,
+                        Autor = livro.Autor,
+                        Nome = livro.Nome,
+                        Preco = livro.Preco,
+                        Data_Publicacao = data,
+                        Url_Imagem = livro.Url_Imagem
+                    };
+
+                    livrosViewModel.Add(livroViewModel);
+
+                }
+
+                return Ok(livrosViewModel);
             }
             catch
             {
-                return BadRequest("Não Atualizado");
+                return BadRequest("Erro ao recuperar a lista!");
             }
         }
 
-        //public async Task<ActionResult> GetLivros()
-        //{
-        //    try
-        //    {
-        //        var livroLista = await _livroDAO.Listar();
-        //        List<LivroViewModel> livrosViewModel = new List<LivroViewModel>();
-
-        //        foreach (var livro in livroLista)
-        //        {
-        //            // DateTime? dataEntre = livro.Data_Publicacao != null ? DateTime.ParseExact(livro.Data_Publicacao.Value, "dd/MM/yyyy", CultureInfo.InvariantCulture) : (DateTime?)null;
-
-        //            var data = livro != null ? livro.Data_Publicacao.Value.ToString("dd/MM/YYYY") : null;
-        //            var livroViewModel = new LivroViewModel
-        //            {
-        //                Id = livro.Id,
-        //                ISBN = livro.ISBN,
-        //                Autor = livro.Autor,
-        //                Nome = livro.Nome,
-        //                Preco = livro.Preco,
-        //                Data_Publicacao = data,
-        //                Url_Imagem = livro.Url_Imagem
-        //            };
-
-        //            livrosViewModel.Add(livro);
-
-        //        }
-
-        //        return Ok(livrosViewModel);
-        //    }
-        //    catch
-        //    {
-        //        return BadRequest("Não Atualizado");
-        //    }
-        //}
-        // GET: api/Livro
+        
         [HttpGet("{id}")]
         public async Task<ActionResult<Livro>> GetLivroDetail(int? id)
         {          
             if (id.HasValue)
             {
                 var livro = await _livroDAO.GetByLivroId(id);
-                //var model = new LivroViewModel
-                //{
-                //    Id = livro.Id,
-                //    ISBN = livro.ISBN,
-                //    Autor = livro.Autor,
-                //    Nome = livro.Nome,
-                //    Preco = livro.Preco,
-                //    Data_Publicacao = livro.Data_Publicacao,
-                //    Url_Imagem = livro.Url_Imagem
-                //};
 
-                return Ok(livro); 
+                var data = livro.Data_Publicacao != null ? livro.Data_Publicacao.Value.ToString("dd/MM/yyyy") : null;
+
+                var model = new LivroViewModel
+                {
+                    Id = livro.Id,
+                    ISBN = livro.ISBN,
+                    Autor = livro.Autor,
+                    Nome = livro.Nome,
+                    Preco = livro.Preco,
+                    Data_Publicacao = data,
+                    Url_Imagem = livro.Url_Imagem
+                };
+
+                return Ok(model); 
             }
-            return NotFound();
-            //d1.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.GetCultureInfo("pt-BR"));
+            return BadRequest("Erro ao recuperar o livro!");
         }
 
         // POST: api/Livro
         [HttpPost]
-        ////[Consumes("multipart/form-data")]
-        public async Task<ActionResult<Livro>> AddLivro([FromBody]LivroViewModel model)
+        public async Task<ActionResult<Livro>> AddLivro([FromForm]LivroViewModel model)
         {
-           
             if (ModelState.IsValid)
             {
                 if (model.ISBN == null || model.ISBN == 0) 
@@ -124,6 +106,13 @@ namespace LivrariaAPI.Controllers
                     return BadRequest("ISBN já cadastrada no sistema, informe outra!");
                 }
 
+                string path = null;
+                if (model.IFormImage.Length > 0)
+                {
+                    SharedClass sharedClass = new SharedClass();
+                    path = await sharedClass.PostFile(model.IFormImage, ("imagens/"), "Capa_" + DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ssss"));
+                }
+
                 var livro = new Livro
                 {
                     ISBN = model.ISBN,
@@ -131,7 +120,7 @@ namespace LivrariaAPI.Controllers
                     Nome = model.Nome,
                     Preco = model.Preco,
                     Data_Publicacao = model.Data_Publicacao != null && model.Data_Publicacao != "string" ? Convert.ToDateTime(model.Data_Publicacao) : null,
-                    //Url_Imagem = model.Url_Imagem
+                    Url_Imagem = path
                 };
 
                 await _livroDAO.CreateAsync(livro);
@@ -139,7 +128,7 @@ namespace LivrariaAPI.Controllers
 
             }
 
-            return BadRequest("Não Atualizado");
+            return BadRequest("Erro ao cadastrar o livro!");
         }
 
         // DELETE: api/Livro/5

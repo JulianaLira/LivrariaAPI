@@ -32,14 +32,7 @@ namespace LivrariaAPI
 
             services.AddScoped<ILivroDAO, LivroDAO>();
 
-            services.AddCors(options =>
-            {
-                options.AddPolicy("EnableCORS", builder =>
-                {
-                    builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()
-                    .Build();
-                });
-            });
+           
 
             services.AddControllersWithViews();
 
@@ -55,7 +48,8 @@ namespace LivrariaAPI
 
             services.AddSingleton<IConfiguration>(Configuration);
 
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
+            services.AddCors();
+            services.AddControllers();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -68,16 +62,20 @@ namespace LivrariaAPI
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "LivrariaAPI v1"));
             }
 
-            app.UseCors("EnableCORS");
-
-            app.UseStaticFiles();
+          
+            app.UseHttpsRedirection();
 
             app.UseRouting();
 
+            // global cors policy
+            app.UseCors(x => x
+                .AllowAnyMethod()
+                .AllowAnyHeader()
+                .SetIsOriginAllowed(origin => true) // allow any origin
+                .AllowCredentials()); // allow credentials
+
             app.UseAuthorization();
 
-            app.UseHttpsRedirection();
-          
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();

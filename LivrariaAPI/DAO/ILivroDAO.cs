@@ -11,6 +11,8 @@ namespace LivrariaAPI.DAO
         Task<Livro> GetByLivroId(int? Id);
         Task<List<Livro>> ListAllAsync();
         Task<ICollection<Livro>> Listar();
+
+        Task<ICollection<Livro>> FiltroLivro(string autor, string nome);
         Task UpdateAsync(Livro livro);
 
         Task<Livro> GetISBN(int? Isbn);

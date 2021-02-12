@@ -19,5 +19,7 @@ namespace LivrariaAPI.Models.ViewModels
         public decimal? Preco { get; set; }
         public string Data_Publicacao { get; set; }
         public string Url_Imagem { get; set; }
+
+        public IFormFile IFormImage { get; set; }
     }
 }

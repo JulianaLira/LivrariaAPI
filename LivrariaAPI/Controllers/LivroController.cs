@@ -9,6 +9,7 @@ using LivrariaAPI.Data;
 using LivrariaAPI.Models;
 using LivrariaAPI.Models.ViewModels;
 using System.Globalization;
+using Microsoft.AspNetCore.Hosting;
 
 namespace LivrariaAPI.Controllers
 {
@@ -17,11 +18,15 @@ namespace LivrariaAPI.Controllers
     public class LivroController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private IWebHostEnvironment _webHostEnvironment;
         private readonly ILivroDAO _livroDAO;
 
-        public LivroController(ApplicationDbContext context, ILivroDAO livroDAO)
+        public LivroController(ApplicationDbContext context,
+            IWebHostEnvironment webHostEnvironment,
+            ILivroDAO livroDAO)
         {
             _context = context;
+            _webHostEnvironment = webHostEnvironment;
             _livroDAO = livroDAO;
         }
 
@@ -102,8 +107,10 @@ namespace LivrariaAPI.Controllers
 
         // POST: api/Livro
         [HttpPost]
-        public async Task<ActionResult<Livro>> AddLivro(LivroViewModel model)
+        ////[Consumes("multipart/form-data")]
+        public async Task<ActionResult<Livro>> AddLivro([FromBody]LivroViewModel model)
         {
+           
             if (ModelState.IsValid)
             {
                 if (model.ISBN == null || model.ISBN == 0) 
@@ -124,7 +131,7 @@ namespace LivrariaAPI.Controllers
                     Nome = model.Nome,
                     Preco = model.Preco,
                     Data_Publicacao = model.Data_Publicacao != null && model.Data_Publicacao != "string" ? Convert.ToDateTime(model.Data_Publicacao) : null,
-                    Url_Imagem = model.Url_Imagem
+                    //Url_Imagem = model.Url_Imagem
                 };
 
                 await _livroDAO.CreateAsync(livro);

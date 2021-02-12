@@ -131,6 +131,55 @@ namespace LivrariaAPI.Controllers
             return BadRequest("Erro ao cadastrar o livro!");
         }
 
+
+        // PUT api/Livro/5
+        [HttpPut("{id}")]
+        public async Task<ActionResult<Livro>> EditLivro(int id, [FromForm] LivroViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var Getlivro = await _livroDAO.GetByLivroId(id);
+                if (Getlivro.Id != 0) 
+                {
+
+                    if (model.ISBN == null || model.ISBN == 0)
+                    {
+                        return BadRequest("ISBN Obrigatorio!");
+                    }
+
+                    var Isbn = await _livroDAO.GetISBN(model.ISBN);
+                    if (Isbn != null)
+                    {
+                        return BadRequest("ISBN já cadastrada no sistema, informe outra!");
+                    }
+
+                    string path = null;
+                    if (model.IFormImage.Length > 0)
+                    {
+                        SharedClass sharedClass = new SharedClass();
+                        path = await sharedClass.PostFile(model.IFormImage, ("imagens/"), "Capa_" + DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ssss"));
+                    }
+
+                    Getlivro.ISBN = model.ISBN;
+                    Getlivro.Autor = model.Autor;
+                    Getlivro.Nome = model.Nome;
+                    Getlivro.Preco = model.Preco;
+                    Getlivro.Data_Publicacao = model.Data_Publicacao != null && model.Data_Publicacao != "string" ? Convert.ToDateTime(model.Data_Publicacao) : null;
+                    Getlivro.Url_Imagem = path;
+
+
+                    await _livroDAO.UpdateAsync(Getlivro);
+                    return Ok("Editado com Sucesso!");
+                }
+
+
+               
+
+            }
+
+            return BadRequest("Erro ao cadastrar o livro!");
+        }
+
         // DELETE: api/Livro/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteLivro(int? id)

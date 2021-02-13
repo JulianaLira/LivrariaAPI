@@ -4,6 +4,8 @@
 
 #Trocar na string de conexão de JULIANA\\SQLEXPRESS, para o seu usuário do banco.
 
+#Apagar arquivos dentro da pasta Migrations
+
 #Fazer Migration
 - Add-Migration Initial
 - update-database

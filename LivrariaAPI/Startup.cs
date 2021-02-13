@@ -65,7 +65,7 @@ namespace LivrariaAPI
           
             app.UseHttpsRedirection();
 
-            app.UseRouting();
+            app.UseStaticFiles();
 
             // global cors policy
             app.UseCors(x => x
@@ -74,11 +74,30 @@ namespace LivrariaAPI
                 .SetIsOriginAllowed(origin => true) // allow any origin
                 .AllowCredentials()); // allow credentials
 
+            app.UseRouting();
+
             app.UseAuthorization();
+
+            //app.UseEndpoints(endpoints =>
+            //{
+            //    endpoints.MapControllers();
+            //});
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapControllers();
+                endpoints.MapControllerRoute(
+                    name: "areaRoute",
+                    pattern: "{area:exists}/{controller}/{action}",
+                    defaults: new { action = "Index" });
+
+                endpoints.MapControllerRoute(
+                    name: "default",
+                    pattern: "{controller}/{action}/{id?}",
+                    defaults: new { controller = "Home", action = "Index" });
+
+                endpoints.MapControllerRoute(
+                    name: "api",
+                    pattern: "{controller}/{id?}");
             });
         }
     }

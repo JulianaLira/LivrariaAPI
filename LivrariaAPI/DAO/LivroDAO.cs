@@ -48,23 +48,18 @@ namespace LivrariaAPI.DAO
                 .ToListAsync();
         }
 
-        public async Task<ICollection<Livro>> FiltroLivro(string autor, string nome)
+        public async Task<ICollection<Livro>> FiltroLivro(int? Isbn, string autor, string nome, decimal? preco, DateTime? data_Publicacao )
         {
             return await _context.Livro
-                .Where(p => (autor == null || p.Autor == autor)
-                && (nome == null || p.Nome == nome))
-
+                 .AsNoTracking()
+                .Where(p => (Isbn == null || p.ISBN.Equals(Isbn))
+                    && (autor == null || p.Autor.Contains(autor))
+                    && (nome == null || p.Nome.Contains(nome))
+                    && (preco == null || p.Preco.Equals(preco))
+                    &&((!data_Publicacao.HasValue) || (p.Data_Publicacao >= data_Publicacao && p.Data_Publicacao <= data_Publicacao)))
+                .OrderByDescending(p => p.Data_Publicacao)
                 .ToListAsync();
         }
-
-        //public async Task<ICollection<Livro>> FiltroLivro(int ProfessorTableId, string titulo1, string categoria1, string status1)
-        //{
-        //    return await context.CursosTable.
-        //        Where(p => (p.ProfessorTableId == ProfessorTableId)
-        //        && (titulo1 == null || p.Titulo == titulo1)
-        //        && (categoria1 == null || p.Categoria == categoria1)
-        //        && (status1 == null || p.Status == status1)).ToListAsync();
-        //}
 
         public async Task<Livro> GetByLivroId(int? Id)
         {

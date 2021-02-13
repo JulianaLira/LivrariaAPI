@@ -16,7 +16,7 @@ namespace LivrariaAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class LivroController : ControllerBase
+    public class LivroController : Controller
     {
         private readonly ApplicationDbContext _context;
         private readonly ILivroDAO _livroDAO;
@@ -27,18 +27,23 @@ namespace LivrariaAPI.Controllers
             _livroDAO = livroDAO;
         }
 
-        // GET: api/Livro
+       
+
         [HttpGet]
-        public async Task<ActionResult> GetLivros()
+        public async Task<ActionResult<Livro>> GetFiltroLivros([FromQuery] FiltroLivroViewModel model)
         {
             try
             {
-                var livroLista = await _livroDAO.Listar();
+                DateTime? dataPublicacao = model.Data_Publicacao != null ? DateTime.ParseExact(model.Data_Publicacao, "dd/MM/yyyy", CultureInfo.InvariantCulture) : (DateTime?)null;
+
+                var isbn = Convert.ToInt32(model.ISBN);
+
+                var livroLista = await _livroDAO.FiltroLivro(model.ISBN, model.Autor, model.Nome, null, dataPublicacao);
 
                 var livrosViewModel = new List<LivroViewModel>();
 
                 foreach (var livro in livroLista)
-                {                    
+                {
                     var data = livro.Data_Publicacao != null ? livro.Data_Publicacao.Value.ToString("dd/MM/yyyy") : null;
                     var livroViewModel = new LivroViewModel
                     {
@@ -62,8 +67,6 @@ namespace LivrariaAPI.Controllers
                 return BadRequest("Erro ao recuperar a lista!");
             }
         }
-
-        
         [HttpGet("{id}")]
         public async Task<ActionResult<Livro>> GetLivroDetail(int? id)
         {          
